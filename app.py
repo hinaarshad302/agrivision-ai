@@ -1,39 +1,40 @@
 
 import streamlit as st
 
+# Import project settings from config.py
+from config import (
+    APP_NAME,
+    APP_TAGLINE,
+    APP_VERSION,
+    SUPPORTED_CROPS,
+    MODEL_NAME,
+    MODEL_TRAINED,
+    PREDICTION_ENABLED
+)
+
+
 # --------------------------------------------------
 # 1. PAGE CONFIGURATION
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="AgriVision AI",
+    page_title=APP_NAME,
     page_icon="🌱",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --------------------------------------------------
-# 2. PROJECT INFORMATION
-# --------------------------------------------------
-
-APP_NAME = "AgriVision AI"
-
-SUPPORTED_CROPS = [
-    "Tomato",
-    "Potato",
-    "Corn",
-    "Apple"
-]
 
 # --------------------------------------------------
-# 3. CUSTOM CSS DESIGN
+# 2. CUSTOM CSS
 # --------------------------------------------------
 
 st.markdown(
     """
     <style>
+
     .main-title {
-        font-size: 42px;
+        font-size: 40px;
         font-weight: 800;
         color: #237A45;
         margin-bottom: 5px;
@@ -58,8 +59,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 # --------------------------------------------------
-# 4. SIDEBAR
+# 3. SIDEBAR
 # --------------------------------------------------
 
 with st.sidebar:
@@ -70,22 +72,22 @@ with st.sidebar:
 
     st.divider()
 
-    st.markdown("### Project Menu")
+    st.markdown("### Project Information")
 
-    st.write("🏠 Dashboard")
-    st.write("🔬 Disease Detection")
-    st.write("🌿 Crop Library")
-    st.write("🚜 My Farms")
-    st.write("🌦️ Weather Insights")
-    st.write("🕘 Scan History")
-    st.write("📊 Analytics")
+    st.write(f"Version: {APP_VERSION}")
+
+    st.write(f"AI Model: {MODEL_NAME}")
 
     st.divider()
 
-    st.caption("Version 1.0 — Development Stage")
+    st.markdown("### Initial Crop Groups")
+
+    for crop in SUPPORTED_CROPS:
+        st.write(f"🌿 {crop}")
+
 
 # --------------------------------------------------
-# 5. MAIN DASHBOARD
+# 4. MAIN DASHBOARD HEADER
 # --------------------------------------------------
 
 st.markdown(
@@ -94,13 +96,11 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="subtitle">'
-    'AI-Powered Smart Agriculture Intelligence Platform'
-    '</div>',
+    f'<div class="subtitle">{APP_TAGLINE}</div>',
     unsafe_allow_html=True
 )
 
-st.markdown(
+st.write(
     """
     Welcome to AgriVision AI!
 
@@ -109,8 +109,9 @@ st.markdown(
     """
 )
 
+
 # --------------------------------------------------
-# 6. PROJECT STATUS
+# 5. PROJECT OVERVIEW
 # --------------------------------------------------
 
 st.subheader("📊 Project Overview")
@@ -119,70 +120,94 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric(
-        label="Supported Crop Groups",
+        label="Supported Crops",
         value=len(SUPPORTED_CROPS)
     )
 
 with col2:
     st.metric(
-        label="AI Model Status",
-        value="Not Trained"
+        label="AI Model",
+        value="Trained" if MODEL_TRAINED else "Not Trained"
     )
 
 with col3:
     st.metric(
-        label="Project Status",
-        value="Development"
+        label="Prediction System",
+        value="Enabled" if PREDICTION_ENABLED else "Disabled"
     )
 
+
 # --------------------------------------------------
-# 7. SUPPORTED CROPS
+# 6. SUPPORTED CROPS
 # --------------------------------------------------
 
 st.subheader("🌿 Initial Supported Crops")
 
-crop_columns = st.columns(4)
+crop_columns = st.columns(len(SUPPORTED_CROPS))
 
 for column, crop in zip(crop_columns, SUPPORTED_CROPS):
 
     with column:
+
         st.markdown(
             f"""
             <div class="info-card">
-                <h4>{crop}</h4>
+                <h4>🌱 {crop}</h4>
                 <p>Planned crop category</p>
             </div>
             """,
             unsafe_allow_html=True
         )
 
+
 # --------------------------------------------------
-# 8. AI MODEL INFORMATION
+# 7. AI MODEL STATUS
 # --------------------------------------------------
 
 st.subheader("🤖 Artificial Intelligence Status")
 
-st.warning(
-    "The machine learning model has not been trained yet. "
-    "Disease predictions will become available after dataset "
-    "preparation, model training and evaluation."
-)
+if MODEL_TRAINED and PREDICTION_ENABLED:
+
+    st.success("AI model is configured for predictions.")
+
+else:
+
+    st.warning(
+        "The AI model is not ready yet. "
+        "Dataset preparation, training and evaluation are required."
+    )
+
 
 # --------------------------------------------------
-# 9. PROJECT WORKFLOW
+# 8. PROJECT WORKFLOW
 # --------------------------------------------------
 
 st.subheader("⚙️ How AgriVision AI Will Work")
 
 st.markdown(
     """
-    1. Farmer uploads a crop leaf image.
-    2. The application validates the image.
-    3. The trained AI model analyzes the image.
-    4. The application displays the predicted class and confidence.
-    5. The result can be saved for future reference.
+    **Step 1:** Farmer uploads a crop leaf image.
+
+    **Step 2:** Application validates the uploaded image.
+
+    **Step 3:** Trained AI model analyzes the image.
+
+    **Step 4:** Application displays the predicted class and confidence.
+
+    **Step 5:** Prediction record can be saved for future reference.
     """
 )
+
+
+# --------------------------------------------------
+# 9. IMPORTANT NOTICE
+# --------------------------------------------------
+
+st.info(
+    "AgriVision AI is an educational decision-support project. "
+    "AI predictions are not confirmed agricultural diagnoses."
+)
+
 
 # --------------------------------------------------
 # 10. FOOTER
@@ -191,10 +216,9 @@ st.markdown(
 st.divider()
 
 st.caption(
-    "AgriVision AI | Smart Agriculture Intelligence Platform"
+    f"{APP_NAME} | Version {APP_VERSION}"
 )
 
 st.caption(
-    "Educational decision-support system. "
-    "AI predictions are not confirmed agricultural diagnoses."
+    "Smart Agriculture Intelligence Platform"
 )
