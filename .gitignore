@@ -1,0 +1,32 @@
+
+# Python temporary files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Private credentials and secrets
+.env
+.streamlit/secrets.toml
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Jupyter temporary files
+.ipynb_checkpoints/
+
+# Datasets (keep large datasets outside GitHub)
+data/
+datasets/
+
+# Trained AI model files (large binary files)
+*.h5
+*.keras
+*.tflite
+*.pt
+*.pth
+*.onnx
