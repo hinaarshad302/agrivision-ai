@@ -67,8 +67,7 @@ MODEL_TRAINED = True
 # Predictions will be enabled after prediction_service.py
 # has been updated and successfully tested.
 
-PREDICTION_ENABLED = False
-
+PREDICTION_ENABLED = True
 
 # --------------------------------------------------
 # 6. DATABASE SETTINGS
