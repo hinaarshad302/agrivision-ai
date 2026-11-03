@@ -153,12 +153,11 @@ for column, crop in zip(crop_columns, SUPPORTED_CROPS):
             f"""
             <div class="info-card">
                 <h4>🌱 {crop}</h4>
-                <p>Planned crop category</p>
+               <p>Supported crop category</p>
             </div>
             """,
             unsafe_allow_html=True
         )
-
 
 # --------------------------------------------------
 # 7. AI MODEL STATUS
@@ -168,16 +167,18 @@ st.subheader("🤖 Artificial Intelligence Status")
 
 if MODEL_TRAINED and PREDICTION_ENABLED:
 
-    st.success("AI model is configured for predictions.")
+    st.success("Trained AI model is enabled for predictions.")
+
+elif MODEL_TRAINED:
+
+    st.warning(
+        "AI model training and evaluation are complete. "
+        "Prediction functionality is awaiting final deployment testing."
+    )
 
 else:
 
-    st.warning(
-        "The AI model is not ready yet. "
-        "Dataset preparation, training and evaluation are required."
-    )
-
-
+    st.error("AI model has not been trained yet.")
 # --------------------------------------------------
 # 8. PROJECT WORKFLOW
 # --------------------------------------------------
