@@ -1,4 +1,3 @@
-
 """
 AgriVision AI
 Central Project Configuration
@@ -46,18 +45,27 @@ IMAGE_SIZE = (224, 224)
 # 4. MACHINE LEARNING MODEL SETTINGS
 # --------------------------------------------------
 
-MODEL_PATH = "models/agrivision_mobilenet.keras"
+MODEL_PATH = "models/agrivision_mobilenet_finetuned_best.keras"
 
 CLASS_LABELS_PATH = "models/class_labels.json"
 
+CALIBRATION_PATH = "models/calibration.json"
+
 MODEL_NAME = "MobileNetV2"
+
+NUM_CLASSES = 21
+
+MODEL_TEMPERATURE = 1.1289
 
 
 # --------------------------------------------------
 # 5. PROJECT STATUS
 # --------------------------------------------------
 
-MODEL_TRAINED = False
+MODEL_TRAINED = True
+
+# Predictions will be enabled after prediction_service.py
+# has been updated and successfully tested.
 
 PREDICTION_ENABLED = False
 
