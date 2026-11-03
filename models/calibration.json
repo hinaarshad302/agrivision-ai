@@ -1,0 +1,11 @@
+{
+    "temperature": 1.1288607753005737,
+    "validation_nll": 0.1268813692314004,
+    "validation_ece": 0.00567405044988321,
+    "model_accuracy": 0.95,
+    "num_classes": 21,
+    "image_size": [
+        224,
+        224
+    ]
+}
