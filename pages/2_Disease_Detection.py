@@ -152,84 +152,72 @@ if uploaded_file is not None:
                         predicted_disease = result["disease"]
                         confidence = result["confidence"]
 
-                        # --------------------------------
-                        # 8. CHECK SELECTED CROP
-                        # --------------------------------
-
-                        if predicted_crop.lower() != crop.lower():
+                        # Do not display a disease result for a crop mismatch.
+                        if predicted_crop.casefold() != crop.casefold():
 
                             st.warning(
                                 f"The selected crop is {crop}, but the "
                                 f"model predicted {predicted_crop}. "
-                                "Please verify the uploaded image."
+                                "No disease result is shown because the crop "
+                                "selection and model prediction do not match. "
+                                "Please verify the uploaded image and selected crop."
                             )
 
                         else:
 
-                        # --------------------------------
-                            # 9. DISPLAY PREDICTION
                             # --------------------------------
-    
+                            # 9. DISPLAY VERIFIED CROP MATCH
+                            # --------------------------------
+
                             st.subheader("🤖 AI Prediction Result")
-    
+
                             result_col1, result_col2 = st.columns(2)
-    
+
                             with result_col1:
-    
-                                st.metric(
-                                    "Predicted Crop",
-                                    predicted_crop
-                                )
-    
+                                st.metric("Predicted Crop", predicted_crop)
+
                             with result_col2:
-    
                                 st.metric(
                                     "Model Confidence",
                                     f"{confidence * 100:.2f}%"
                                 )
-    
+
                             st.success(
-                                f"Predicted Class: {predicted_disease.replace('_', ' ')}"
+                                f"Predicted Class: "
+                                f"{predicted_disease.replace('_', ' ')}"
                             )
-    
+
                             # --------------------------------
                             # 10. TOP 3 PREDICTIONS
                             # --------------------------------
-    
+
                             st.subheader("Top 3 Model Predictions")
-    
+
                             for index, prediction in enumerate(
                                 result["top_predictions"],
                                 start=1
                             ):
-    
                                 st.write(
                                     f"**{index}. "
                                     f"{prediction['crop']} — "
                                     f"{prediction['disease'].replace('_', ' ')}**"
                                 )
-    
-                                st.progress(
-                                    prediction["confidence"]
-                                )
-    
+                                st.progress(prediction["confidence"])
                                 st.caption(
                                     f"Confidence: "
                                     f"{prediction['confidence'] * 100:.2f}%"
                                 )
-    
+
                             # --------------------------------
                             # 11. IMPORTANT NOTICE
                             # --------------------------------
-    
+
                             st.info(
                                 "This is an AI-generated prediction, not a "
                                 "confirmed agricultural diagnosis. Image quality "
                                 "and real-world field conditions can affect results. "
                                 "Consult an agricultural expert before treatment."
                             )
-    
-    
 
                     else:
 
