@@ -1,4 +1,3 @@
-
 """
 AgriVision AI
 Crop Disease Detection Page
@@ -35,23 +34,31 @@ st.set_page_config(
 st.title("🔬 Crop Disease Detection")
 
 st.write(
-    "Upload a crop leaf image to analyze its possible disease "
-    "using AgriVision AI."
+    "Upload a clear crop leaf image and enter its crop name. "
+    "AgriVision AI will check whether the current disease model "
+    "supports that crop."
 )
 
 st.info(
-    "Supported crops: Tomato, Potato, Corn and Apple."
+    "You can upload an image of any crop. Current disease prediction "
+    "is available only for: " + ", ".join(SUPPORTED_CROPS) + ". "
+    "Other crops can be uploaded, but disease diagnosis is not enabled "
+    "for them yet."
 )
 
 
 # --------------------------------------------------
-# 3. CROP SELECTION
+# 3. CROP NAME INPUT
 # --------------------------------------------------
 
-crop = st.selectbox(
-    "Select the crop",
-    SUPPORTED_CROPS
-)
+crop_name = st.text_input(
+    "Enter crop name",
+    placeholder="e.g. Tomato, Wheat, Rice, Cotton, Mango",
+    help=(
+        "Enter the crop shown in the image. You may use a common English "
+        "name or a supported local name such as Tamatar, Aloo or Makai."
+    )
+).strip()
 
 
 # --------------------------------------------------
@@ -59,9 +66,9 @@ crop = st.selectbox(
 # --------------------------------------------------
 
 uploaded_file = st.file_uploader(
-    "Upload crop leaf image",
+    "Upload any crop leaf image",
     type=IMAGE_TYPES,
-    help=f"Maximum image size: {MAX_IMAGE_SIZE_MB} MB"
+    help=f"Accepted formats: JPG, JPEG, PNG. Maximum size: {MAX_IMAGE_SIZE_MB} MB."
 )
 
 
@@ -85,7 +92,7 @@ if uploaded_file is not None:
             # 5. IMAGE PREVIEW
             # ----------------------------------------
 
-            st.subheader("Uploaded Leaf Image")
+            st.subheader("Uploaded Crop Image")
 
             col1, col2 = st.columns([1, 1])
 
@@ -93,106 +100,74 @@ if uploaded_file is not None:
 
                 st.image(
                     image,
-                    caption=f"Selected crop: {crop}",
+                    caption=f"Crop entered: {crop_name or 'Not entered'}",
                     use_container_width=True
                 )
 
             with col2:
 
                 st.markdown("### Image Information")
-
-                st.write(f"**Selected Crop:** {crop}")
-
+                st.write(f"**Crop Name:** {crop_name or 'Not entered'}")
                 st.write(
-                    f"**Image Dimensions:** "
-                    f"{image.width} × {image.height} pixels"
+                    f"**Image Dimensions:** {image.width} × {image.height} pixels"
                 )
-
-                st.write(
-                    f"**File Size:** {file_size_mb:.2f} MB"
-                )
-
+                st.write(f"**File Size:** {file_size_mb:.2f} MB")
                 st.success("Image uploaded successfully.")
 
             st.divider()
 
             # ----------------------------------------
-            # 6. MODEL STATUS
+            # 6. MODEL STATUS AND PREDICTION
             # ----------------------------------------
 
             if not PREDICTION_ENABLED:
 
                 st.warning(
-                    "The AI prediction feature is currently disabled. "
-                    "It will be enabled after successful model deployment "
-                    "and testing."
+                    "The AI prediction feature is currently disabled."
                 )
 
-            else:
+            elif st.button(
+                "🔍 Analyze Leaf Image",
+                type="primary",
+                use_container_width=True
+            ):
 
-                # ------------------------------------
-                # 7. RUN AI PREDICTION
-                # ------------------------------------
+                if not crop_name:
 
-                if st.button(
-                    "🔍 Analyze Leaf Image",
-                    type="primary",
-                    use_container_width=True
-                ):
+                    st.warning(
+                        "Please enter the crop name before starting analysis."
+                    )
+
+                else:
 
                     with st.spinner(
-                        "AgriVision AI is analyzing your leaf image..."
+                        "AgriVision AI is checking the image..."
                     ):
 
-                        result = predict_disease(image)
+                        result = predict_disease(
+                            image,
+                            expected_crop=crop_name
+                        )
 
                     if result["status"] == "success":
-
-                        predicted_crop = result["crop"]
-                        predicted_disease = result["disease"]
-                        confidence = result["confidence"]
-
-                        # --------------------------------
-                        # 8. CHECK SELECTED CROP
-                        # --------------------------------
-
-                        if predicted_crop.lower() != crop.lower():
-
-                            st.warning(
-                                f"The selected crop is {crop}, but the "
-                                f"model predicted {predicted_crop}. "
-                                "Please verify the uploaded image."
-                            )
-
-                        # --------------------------------
-                        # 9. DISPLAY PREDICTION
-                        # --------------------------------
 
                         st.subheader("🤖 AI Prediction Result")
 
                         result_col1, result_col2 = st.columns(2)
 
                         with result_col1:
-
-                            st.metric(
-                                "Predicted Crop",
-                                predicted_crop
-                            )
+                            st.metric("Predicted Crop", result["crop"])
 
                         with result_col2:
-
                             st.metric(
                                 "Model Confidence",
-                                f"{confidence * 100:.2f}%"
+                                f"{result['confidence'] * 100:.2f}%"
                             )
 
                         st.success(
-                            f"Predicted Class: {predicted_disease.replace('_', ' ')}"
+                            "Predicted Disease: "
+                            + result["disease"].replace("_", " ")
                         )
-
-                        # --------------------------------
-                        # 10. TOP 3 PREDICTIONS
-                        # --------------------------------
 
                         st.subheader("Top 3 Model Predictions")
 
@@ -202,29 +177,33 @@ if uploaded_file is not None:
                         ):
 
                             st.write(
-                                f"**{index}. "
-                                f"{prediction['crop']} — "
+                                f"**{index}. {prediction['crop']} — "
                                 f"{prediction['disease'].replace('_', ' ')}**"
                             )
 
-                            st.progress(
-                                prediction["confidence"]
-                            )
+                            st.progress(prediction["confidence"])
 
                             st.caption(
-                                f"Confidence: "
-                                f"{prediction['confidence'] * 100:.2f}%"
+                                f"Model score: {prediction['confidence'] * 100:.2f}%"
                             )
 
-                        # --------------------------------
-                        # 11. IMPORTANT NOTICE
-                        # --------------------------------
-
                         st.info(
-                            "This is an AI-generated prediction, not a "
-                            "confirmed agricultural diagnosis. Image quality "
-                            "and real-world field conditions can affect results. "
-                            "Consult an agricultural expert before treatment."
+                            "This is an AI-generated prediction, not a confirmed "
+                            "agricultural diagnosis. Model confidence is not a "
+                            "guarantee of correctness. Consult an agricultural "
+                            "expert before applying treatment."
+                        )
+
+                    elif result["status"] == "unsupported":
+
+                        st.warning(result["message"])
+
+                    elif result["status"] == "mismatch":
+
+                        st.warning(result["message"])
+                        st.info(
+                            "No disease result is shown because the model's "
+                            "predicted crop did not match the crop name you entered."
                         )
 
                     else:
