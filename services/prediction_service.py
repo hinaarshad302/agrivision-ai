@@ -18,185 +18,99 @@ from config import (
     MODEL_TRAINED,
     PREDICTION_ENABLED,
     MODEL_TEMPERATURE,
+    MIN_PREDICTION_CONFIDENCE,
     SUPPORTED_CROPS
 )
 
-
-# --------------------------------------------------
-# 1. CROP NAME NORMALIZATION
-# --------------------------------------------------
-
 CROP_ALIASES = {
-    "tomato": "Tomato",
-    "tamatar": "Tomato",
-    "potato": "Potato",
-    "aloo": "Potato",
-    "alu": "Potato",
-    "corn": "Corn",
-    "maize": "Corn",
-    "makai": "Corn",
-    "makkai": "Corn",
-    "apple": "Apple",
-    "seb": "Apple",
-    "saib": "Apple",
+    "tomato": "Tomato", "tamatar": "Tomato",
+    "potato": "Potato", "aloo": "Potato", "alu": "Potato",
+    "corn": "Corn", "maize": "Corn", "makai": "Corn", "makkai": "Corn",
+    "apple": "Apple", "seb": "Apple", "saib": "Apple",
 }
 
 
 def normalize_crop_name(crop_name):
     """Return the canonical supported crop name, or None."""
-
     if not crop_name:
         return None
-
     normalized = " ".join(str(crop_name).strip().lower().replace("_", " ").split())
-
     canonical_name = CROP_ALIASES.get(normalized)
-
     if canonical_name and canonical_name in SUPPORTED_CROPS:
         return canonical_name
-
     for supported_crop in SUPPORTED_CROPS:
         if normalized == supported_crop.lower():
             return supported_crop
-
     return None
 
-
-# --------------------------------------------------
-# 2. LOAD TRAINED MODEL
-# --------------------------------------------------
 
 @lru_cache(maxsize=1)
 def load_model():
     """Load the trained MobileNetV2 model."""
-
-    if not MODEL_TRAINED or not PREDICTION_ENABLED:
+    if not MODEL_TRAINED or not PREDICTION_ENABLED or not os.path.exists(MODEL_PATH):
         return None
-
-    if not os.path.exists(MODEL_PATH):
-        return None
-
     try:
         import tensorflow as tf
-
-        return tf.keras.models.load_model(
-            MODEL_PATH,
-            compile=False
-        )
-
+        return tf.keras.models.load_model(MODEL_PATH, compile=False)
     except Exception as error:
         print(f"Model loading error: {error}")
         return None
 
 
-# --------------------------------------------------
-# 3. LOAD CLASS LABELS
-# --------------------------------------------------
-
 @lru_cache(maxsize=1)
 def load_class_labels():
     """Load the 21 crop disease class labels."""
-
     if not os.path.exists(CLASS_LABELS_PATH):
         raise FileNotFoundError("Class labels file was not found.")
-
     with open(CLASS_LABELS_PATH, "r", encoding="utf-8") as file:
         labels_data = json.load(file)
+    return [labels_data[str(index)] for index in range(len(labels_data))]
 
-    return [
-        labels_data[str(index)]
-        for index in range(len(labels_data))
-    ]
-
-
-# --------------------------------------------------
-# 4. LOAD CALIBRATION SETTINGS
-# --------------------------------------------------
 
 def load_temperature():
     """Read temperature scaling configuration."""
-
     if os.path.exists(CALIBRATION_PATH):
-
         with open(CALIBRATION_PATH, "r", encoding="utf-8") as file:
             calibration_data = json.load(file)
-
-        temperature = float(
-            calibration_data.get("temperature", MODEL_TEMPERATURE)
-        )
-
+        temperature = float(calibration_data.get("temperature", MODEL_TEMPERATURE))
     else:
         temperature = float(MODEL_TEMPERATURE)
-
     if temperature <= 0:
         raise ValueError("Invalid calibration temperature.")
-
     return temperature
 
 
-# --------------------------------------------------
-# 5. PREPROCESS IMAGE
-# --------------------------------------------------
-
 def preprocess_image(image):
     """Prepare an uploaded image for MobileNetV2."""
-
     if not isinstance(image, Image.Image):
         image = Image.fromarray(np.asarray(image))
-
-    image = image.convert("RGB")
-    image = image.resize(IMAGE_SIZE, Image.Resampling.BILINEAR)
-
-    image_array = np.asarray(image, dtype=np.float32)
-    image_array = np.expand_dims(image_array, axis=0)
-
+    image = image.convert("RGB").resize(IMAGE_SIZE, Image.Resampling.BILINEAR)
+    image_array = np.expand_dims(np.asarray(image, dtype=np.float32), axis=0)
     import tensorflow as tf
+    return tf.keras.applications.mobilenet_v2.preprocess_input(image_array)
 
-    return tf.keras.applications.mobilenet_v2.preprocess_input(
-        image_array
-    )
-
-
-# --------------------------------------------------
-# 6. TEMPERATURE CALIBRATION
-# --------------------------------------------------
 
 def calibrate_probabilities(probabilities, temperature):
     """Apply temperature scaling to model probabilities."""
-
     probabilities = np.clip(probabilities, 1e-12, 1.0)
     logits = np.log(probabilities)
     scaled_logits = logits / temperature
-
     exp_values = np.exp(scaled_logits - np.max(scaled_logits))
     return exp_values / np.sum(exp_values)
 
 
-# --------------------------------------------------
-# 7. PREDICT CROP DISEASE
-# --------------------------------------------------
-
 def predict_disease(image, expected_crop=None):
     """
-    Predict disease only when the user-entered crop is supported.
-
-    The current model does not automatically identify arbitrary crops.
+    Predict only for supported, user-declared crops.
+    Confidence gating reduces weak predictions but cannot detect every
+    unsupported or out-of-distribution image.
     """
-
     if image is None:
-        return {
-            "status": "error",
-            "message": "Please upload a crop leaf image."
-        }
-
+        return {"status": "error", "message": "Please upload a crop leaf image."}
     if expected_crop is None:
-        return {
-            "status": "error",
-            "message": "Please enter the crop name before prediction."
-        }
+        return {"status": "error", "message": "Please enter the crop name before prediction."}
 
     normalized_crop = normalize_crop_name(expected_crop)
-
     if normalized_crop is None:
         return {
             "status": "unsupported",
@@ -209,67 +123,61 @@ def predict_disease(image, expected_crop=None):
         }
 
     model = load_model()
-
     if model is None:
         return {
             "status": "unavailable",
-            "message": (
-                "AI model is currently unavailable. "
-                "Please check model configuration."
-            )
+            "message": "AI model is currently unavailable. Please check model configuration."
         }
 
     try:
-
         labels = load_class_labels()
         temperature = load_temperature()
         processed_image = preprocess_image(image)
-
         predictions = model.predict(processed_image, verbose=0)
         probabilities = np.asarray(predictions[0], dtype=np.float64)
 
         if probabilities.ndim != 1 or len(probabilities) != len(labels):
             raise ValueError("Model output does not match the class labels.")
-
         if not np.all(np.isfinite(probabilities)):
             raise ValueError("Model returned invalid prediction values.")
+        if np.any(probabilities < 0) or not np.isclose(np.sum(probabilities), 1.0, atol=1e-3):
+            raise ValueError("Model output is not a valid probability distribution.")
 
-        calibrated_probabilities = calibrate_probabilities(
-            probabilities,
-            temperature
-        )
-
+        calibrated_probabilities = calibrate_probabilities(probabilities, temperature)
         predicted_index = int(np.argmax(calibrated_probabilities))
         predicted_label = labels[predicted_index]
 
         if "___" not in predicted_label:
             raise ValueError("Invalid class label format.")
-
         predicted_crop, disease = predicted_label.split("___", maxsplit=1)
 
-        # Never show a disease result if the model crop differs from
-        # the crop name supplied by the user.
         if predicted_crop.lower() != normalized_crop.lower():
             return {
                 "status": "mismatch",
                 "message": (
                     f"You entered '{normalized_crop}', but the model's top "
                     f"class belongs to '{predicted_crop}'. The result has "
-                    "been blocked to avoid showing a potentially incorrect "
-                    "disease diagnosis. Please check the crop name and image."
+                    "been blocked. Please check the crop name and image."
                 )
             }
 
         confidence = float(calibrated_probabilities[predicted_index])
+        if confidence < MIN_PREDICTION_CONFIDENCE:
+            return {
+                "status": "uncertain",
+                "confidence": confidence,
+                "message": (
+                    f"The model score ({confidence * 100:.1f}%) is below the "
+                    f"minimum display threshold ({MIN_PREDICTION_CONFIDENCE * 100:.0f}%). "
+                    "No disease diagnosis is shown. Try a clearer leaf image."
+                )
+            }
 
-        # Show alternatives only from the same crop, never other crops.
         same_crop_indices = [
-            index
-            for index, label in enumerate(labels)
+            index for index, label in enumerate(labels)
             if "___" in label
             and label.split("___", maxsplit=1)[0].lower() == normalized_crop.lower()
         ]
-
         same_crop_indices = sorted(
             same_crop_indices,
             key=lambda index: calibrated_probabilities[index],
@@ -277,12 +185,8 @@ def predict_disease(image, expected_crop=None):
         )[:3]
 
         top_predictions = []
-
         for index in same_crop_indices:
-
-            label = labels[int(index)]
-            top_crop, top_disease = label.split("___", maxsplit=1)
-
+            top_crop, top_disease = labels[int(index)].split("___", maxsplit=1)
             top_predictions.append({
                 "crop": top_crop,
                 "disease": top_disease,
@@ -300,13 +204,8 @@ def predict_disease(image, expected_crop=None):
         }
 
     except Exception as error:
-
         print(f"Prediction error: {error}")
-
         return {
             "status": "error",
-            "message": (
-                "Prediction could not be completed. "
-                "Please check the application logs."
-            )
+            "message": "Prediction could not be completed. Please check the application logs."
         }
