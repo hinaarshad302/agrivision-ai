@@ -68,6 +68,21 @@ class PredictionSafetyTests(unittest.TestCase):
     @patch.object(service, "load_temperature", return_value=1.0)
     @patch.object(service, "load_class_labels")
     @patch.object(service, "load_model")
+    def test_low_confidence_prediction_is_withheld(
+        self, load_model, load_labels, load_temperature, preprocess
+    ):
+        load_model.return_value = FakeModel([0.18, 0.17, 0.16, 0.18, 0.16, 0.15])
+        load_labels.return_value = self.labels
+
+        result = service.predict_disease(object(), expected_crop="Tomato")
+
+        self.assertEqual(result["status"], "uncertain")
+        self.assertNotIn("disease", result)
+
+    @patch.object(service, "preprocess_image", return_value=np.zeros((1, 224, 224, 3)))
+    @patch.object(service, "load_temperature", return_value=1.0)
+    @patch.object(service, "load_class_labels")
+    @patch.object(service, "load_model")
     def test_success_returns_only_same_crop_alternatives(
         self, load_model, load_labels, load_temperature, preprocess
     ):
