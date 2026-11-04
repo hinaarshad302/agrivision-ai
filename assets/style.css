@@ -1,0 +1,151 @@
+
+/* ==========================================
+   AGRIVISION AI — PROFESSIONAL DESIGN SYSTEM
+   ========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #16794b;
+    --primary-dark: #105c39;
+    --primary-light: #e8f5ed;
+    --accent: #a3c957;
+    --background: #f7faf8;
+    --surface: #ffffff;
+    --text: #172b22;
+    --muted: #718078;
+    --border: #e3ebe6;
+}
+
+/* Main application */
+.stApp {
+    background: var(--background);
+    color: var(--text);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Main content spacing */
+.block-container {
+    max-width: 1440px;
+    padding-top: 2.2rem;
+    padding-bottom: 3rem;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    color: var(--text) !important;
+    font-family: 'Inter', 'Segoe UI', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px;
+}
+
+p, label, .stMarkdown {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: #edf5ef;
+    border-right: 1px solid var(--border);
+}
+
+section[data-testid="stSidebar"] > div {
+    padding-top: 1.5rem;
+}
+
+/* Sidebar navigation and text */
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] label {
+    color: var(--text);
+}
+
+/* Native sidebar open/close control */
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="stSidebarExpandButton"] {
+    color: var(--primary) !important;
+    border-radius: 10px !important;
+}
+
+button[data-testid="stSidebarCollapseButton"]:hover,
+button[data-testid="stSidebarExpandButton"]:hover {
+    background: var(--primary-light) !important;
+}
+
+/* Buttons */
+.stButton > button {
+    background: var(--primary);
+    color: white;
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    padding: 0.55rem 1.1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.stButton > button:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+}
+
+/* Inputs */
+.stTextInput input,
+.stSelectbox div[data-baseweb="select"],
+.stTextArea textarea {
+    border-radius: 9px;
+    border-color: var(--border);
+}
+
+/* Upload area */
+[data-testid="stFileUploader"] {
+    background: var(--surface);
+    border: 1px dashed #a8cbb5;
+    border-radius: 13px;
+    padding: 12px;
+}
+
+/* Metric cards */
+[data-testid="stMetric"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(20, 70, 40, 0.04);
+}
+
+/* Information messages */
+div[data-testid="stAlert"] {
+    border-radius: 11px;
+}
+
+/* Dataframes and tables */
+[data-testid="stDataFrame"] {
+    border: 1px solid var(--border);
+    border-radius: 11px;
+}
+
+/* Dividers */
+hr {
+    border-color: var(--border);
+}
+
+/* Links */
+a {
+    color: var(--primary);
+}
+
+/* Footer */
+footer {
+    visibility: hidden;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+    .block-container {
+        padding: 1rem;
+    }
+
+    h1 {
+        font-size: 1.8rem !important;
+    }
+}
