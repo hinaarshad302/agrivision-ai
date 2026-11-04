@@ -262,16 +262,25 @@ def predict_disease(image, expected_crop=None):
 
         confidence = float(calibrated_probabilities[predicted_index])
 
-        top_indices = np.argsort(calibrated_probabilities)[-3:][::-1]
+        # Show alternatives only from the same crop, never other crops.
+        same_crop_indices = [
+            index
+            for index, label in enumerate(labels)
+            if "___" in label
+            and label.split("___", maxsplit=1)[0].lower() == normalized_crop.lower()
+        ]
+
+        same_crop_indices = sorted(
+            same_crop_indices,
+            key=lambda index: calibrated_probabilities[index],
+            reverse=True
+        )[:3]
+
         top_predictions = []
 
-        for index in top_indices:
+        for index in same_crop_indices:
 
             label = labels[int(index)]
-
-            if "___" not in label:
-                continue
-
             top_crop, top_disease = label.split("___", maxsplit=1)
 
             top_predictions.append({
