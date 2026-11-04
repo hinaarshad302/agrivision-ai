@@ -206,6 +206,10 @@ if uploaded_file is not None:
                             "predicted crop did not match the crop name you entered."
                         )
 
+                    elif result["status"] == "uncertain":
+
+                        st.warning(result["message"])
+
                     else:
 
                         st.error(
